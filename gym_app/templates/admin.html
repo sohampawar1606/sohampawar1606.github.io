@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRONCORE ADMIN</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f5f2ed;--white:#fff;--border:#e8e2d9;--accent:#1a1a2e;--gold:#c9a84c;--gold2:#e8c96a;--red:#d64045;--green:#2d8a4e;--blue:#2563a8;--text:#1a1a1a;--muted:#8a8278;--light:#f0ece5;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
+.login-screen{position:fixed;inset:0;background:var(--accent);display:flex;z-index:999;transition:opacity 0.5s;}
+.login-art{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+.login-art::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(201,168,76,0.06) 40px,rgba(201,168,76,0.06) 41px);}
+.login-badge{width:80px;height:80px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:24px;position:relative;z-index:1;}
+.login-headline{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fff;text-align:center;position:relative;z-index:1;line-height:1.2;}
+.login-sub{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:3px;text-transform:uppercase;margin-top:12px;position:relative;z-index:1;}
+.login-art-bg{font-family:'Playfair Display',serif;font-size:80px;font-weight:900;color:rgba(255,255,255,0.05);letter-spacing:8px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;}
+.login-form-side{width:440px;flex-shrink:0;background:var(--bg);padding:60px 48px;display:flex;flex-direction:column;justify-content:center;}
+.login-form-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;margin-bottom:6px;}
+.login-form-sub{font-size:13px;color:var(--muted);margin-bottom:40px;}
+.lfield{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
+.lfield label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.lfield input{background:#fff;border:1.5px solid var(--border);color:var(--text);padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;}
+.lfield input:focus{border-color:var(--gold);}
+.btn-login{background:var(--accent);color:#fff;border:none;padding:16px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;width:100%;transition:background 0.2s;margin-top:8px;}
+.btn-login:hover{background:#2d2d4a;}
+.login-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:16px;font-family:'DM Mono',monospace;}
+.login-hint span{color:var(--gold);}
+header{background:var(--accent);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:2px;}
+.logo .gold{color:var(--gold);}
+.logo .admin-badge{font-family:'DM Mono',monospace;font-size:9px;background:var(--gold);color:var(--accent);padding:2px 8px;letter-spacing:2px;margin-left:12px;}
+.header-right{display:flex;align-items:center;gap:16px;}
+.occ-header-chip{font-size:11px;padding:6px 14px;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;}
+.occ-header-dot{width:8px;height:8px;border-radius:50%;}
+.owner-info{text-align:right;font-size:12px;color:rgba(255,255,255,0.6);}
+.owner-name{font-weight:600;color:#fff;font-size:14px;}
+.btn-logout{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;padding:8px 16px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);cursor:pointer;transition:all 0.2s;}
+.btn-logout:hover{border-color:var(--gold);color:var(--gold);}
+.app{display:flex;min-height:calc(100vh - 64px);}
+.sidebar{width:240px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);padding:32px 0;display:flex;flex-direction:column;}
+.sidebar-section{font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--muted);padding:0 24px;margin-bottom:8px;margin-top:24px;}
+.sidebar-section:first-child{margin-top:0;}
+.nav-item{padding:12px 24px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:12px;border-left:3px solid transparent;margin:1px 0;}
+.nav-item:hover{color:var(--text);background:var(--light);}
+.nav-item.active{color:var(--accent);border-left-color:var(--gold);background:#f9f6f0;font-weight:600;}
+.nav-icon{width:18px;text-align:center;font-size:15px;}
+.content{flex:1;padding:40px;overflow-y:auto;background:var(--bg);}
+.page{display:none;animation:fadeIn 0.25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;}
+.page-title{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;line-height:1;}
+.page-subtitle{font-size:13px;color:var(--muted);margin-top:6px;}
+.btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.5px;padding:10px 20px;cursor:pointer;border:none;transition:all 0.2s;border-radius:2px;}
+.btn-dark{background:var(--accent);color:#fff;} .btn-dark:hover{background:#2d2d4a;}
+.btn-gold{background:var(--gold);color:var(--accent);} .btn-gold:hover{background:var(--gold2);}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);} .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-red{background:transparent;border:1.5px solid var(--red);color:var(--red);} .btn-red:hover{background:var(--red);color:#fff;}
+.btn-green{background:transparent;border:1.5px solid var(--green);color:var(--green);} .btn-green:hover{background:var(--green);color:#fff;}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+.kpi-card{background:#fff;border:1px solid var(--border);padding:24px;position:relative;overflow:hidden;}
+.kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transition:transform 0.3s;transform-origin:left;}
+.kpi-card:hover::after{transform:scaleX(1);}
+.kpi-icon{font-size:24px;margin-bottom:16px;}
+.kpi-value{font-family:'Playfair Display',serif;font-size:40px;font-weight:700;line-height:1;margin-bottom:4px;}
+.kpi-label{font-size:12px;color:var(--muted);font-weight:500;}
+.kpi-change{font-size:11px;margin-top:8px;font-weight:600;}
+.kpi-change.up{color:var(--green);}
+/* OCCUPANCY ADMIN CARD */
+.occ-admin-card{background:#fff;border:1px solid var(--border);padding:28px;margin-bottom:24px;}
+.occ-admin-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+.occ-admin-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.occ-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.occ-big-num{font-family:'Playfair Display',serif;font-size:64px;font-weight:900;color:var(--accent);line-height:1;margin-right:8px;}
+.occ-bar-track{flex:1;height:16px;background:var(--light);border-radius:8px;overflow:hidden;min-width:200px;}
+.occ-bar-fill{height:100%;border-radius:8px;transition:width 0.5s ease;}
+.occ-slider{width:100%;margin:12px 0;}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;background:var(--light);border-radius:3px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;}
+/* TABLE */
+.table-card{background:#fff;border:1px solid var(--border);margin-bottom:24px;}
+.table-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.table-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;}
+.table-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--light);}
+th{padding:12px 20px;text-align:left;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+td{padding:14px 20px;font-size:13px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#faf8f5;}
+.member-name{font-weight:600;font-size:14px;}
+.member-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.badge{display:inline-block;padding:3px 10px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:2px;}
+.badge-green{background:#e8f5ee;color:var(--green);}
+.badge-red{background:#fdecea;color:var(--red);}
+.badge-gold{background:#fdf6e3;color:#9a7a1e;}
+.badge-blue{background:#e8f0fd;color:var(--blue);}
+.badge-grey{background:var(--light);color:var(--muted);}
+.badge-orange{background:#fff3e0;color:#e65100;}
+/* CHART */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.chart-card{background:#fff;border:1px solid var(--border);padding:24px;}
+.chart-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:4px;}
+.chart-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.bar-chart{display:flex;flex-direction:column;gap:10px;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-label{font-size:11px;color:var(--muted);width:110px;text-align:right;flex-shrink:0;font-weight:500;}
+.bar-track{flex:1;height:26px;background:var(--light);overflow:hidden;}
+.bar-fill{height:100%;background:var(--accent);transition:width 0.8s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;min-width:32px;}
+.bar-fill.gold{background:var(--gold);} .bar-fill.green{background:var(--green);}
+.bar-val{font-size:11px;color:#fff;font-weight:600;font-family:'DM Mono',monospace;}
+/* TOOLBAR */
+.toolbar{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+.search-input{background:#fff;border:1.5px solid var(--border);color:var(--text);padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;border-radius:2px;width:240px;}
+.search-input:focus{border-color:var(--gold);}
+.filter-select{background:#fff;border:1.5px solid var(--border);color:var(--text);padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;border-radius:2px;cursor:pointer;appearance:none;}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,46,0.6);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(4px);}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:#fff;width:520px;max-width:90vw;max-height:85vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.3s;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-header{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;}
+.modal-close{font-size:20px;cursor:pointer;color:var(--muted);background:none;border:none;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:28px;}
+.modal-footer{padding:20px 28px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end;}
+.mfield{margin-bottom:18px;}
+.mfield label{display:block;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.mfield input,.mfield select{width:100%;background:var(--bg);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;border-radius:2px;transition:border-color 0.2s;}
+.mfield input:focus,.mfield select:focus{border-color:var(--gold);}
+.mfield-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+/* HISTORY */
+.history-item{padding:14px 0;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;}
+.history-item:last-child{border-bottom:none;}
+.history-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:90px;}
+.history-goal{flex:1;font-weight:600;font-size:14px;text-transform:capitalize;}
+.history-cal{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--green);}
+/* DATA STRUCTURES INFO */
+.ds-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.ds-card{background:#fff;border:1px solid var(--border);padding:20px;border-left:4px solid var(--gold);}
+.ds-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:4px;}
+.ds-type{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;font-family:'DM Mono',monospace;}
+.ds-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+/* TOAST */
+.toast{position:fixed;bottom:32px;right:32px;background:var(--accent);color:#fff;padding:14px 22px;font-size:13px;font-weight:500;z-index:9000;transform:translateY(60px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);border-left:4px solid var(--gold);max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-left-color:var(--green);} .toast.error{border-left-color:var(--red);}
+.empty{text-align:center;padding:60px;color:var(--muted);font-size:13px;}
+.loading-row td{text-align:center;color:var(--muted);font-style:italic;padding:40px!important;}
+.flex{display:flex;} .gap-8{gap:8px;} .gap-12{gap:12px;} .items-center{align-items:center;}
+.mt-16{margin-top:16px;} .mt-24{margin-top:24px;}
+.text-green{color:var(--green);font-weight:600;}
+.section-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-art">
+    <div class="login-art-bg">IRONCORE</div>
+    <div class="login-badge">🏛️</div>
+    <div class="login-headline">Owner<br>Dashboard</div>
+    <div class="login-sub">Admin Access Only</div>
+  </div>
+  <div class="login-form-side">
+    <div class="login-form-title">Welcome Back</div>
+    <div class="login-form-sub">Sign in to manage your gym</div>
+    <div class="lfield"><label>Admin Password</label>
+      <input type="password" id="adminPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+    </div>
+    <button class="btn-login" onclick="doAdminLogin()">ACCESS DASHBOARD →</button>
+    <div class="login-hint">Default password: <span>admin123</span></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">IRON<span class="gold">CORE</span><span class="admin-badge">ADMIN</span></div>
+  <div class="header-right">
+    <div class="occ-header-chip">
+      <span class="occ-header-dot" id="hOccDot" style="background:#888"></span>
+      <span id="hOccText">Loading...</span>
+    </div>
+    <div class="owner-info"><div class="owner-name">Gym Owner</div><div id="memberCountHeader">—</div></div>
+    <button class="btn-logout" onclick="doLogout()">LOGOUT</button>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-section">Overview</div>
+    <div class="nav-item active" onclick="nav('dashboard')" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="sidebar-section">Members</div>
+    <div class="nav-item" onclick="nav('members')" data-page="members"><span class="nav-icon">👥</span> All Members</div>
+    <div class="sidebar-section">Insights</div>
+    <div class="nav-item" onclick="nav('analytics')" data-page="analytics"><span class="nav-icon">📈</span> Analytics</div>
+    <div class="sidebar-section">Gym</div>
+    <div class="nav-item" onclick="nav('occupancy')" data-page="occupancy"><span class="nav-icon">👁️</span> Occupancy</div>
+    <div class="nav-item" onclick="nav('equipment')" data-page="equipment"><span class="nav-icon">🏋️</span> Equipment</div>
+    <div class="sidebar-section">Info</div>
+    <div class="nav-item" onclick="nav('datastruct')" data-page="datastruct"><span class="nav-icon">🗂️</span> Data Structures</div>
+  </nav>
+
+  <main class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><div class="page-title">Good morning, <span style="color:var(--gold)">Owner</span> 👋</div>
+          <div class="page-subtitle" id="dashDate">Loading live data...</div></div>
+        <button class="btn btn-dark" onclick="nav('members');setTimeout(openAddMember,200)">+ Add Member</button>
+      </div>
+      <div class="kpi-grid" id="dashKpis"></div>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:16px">
+        <div class="table-card">
+          <div class="table-header">
+            <div><div class="table-title">Registered Members</div><div class="table-sub">Live from gym_database.json</div></div>
+            <button class="btn btn-outline btn-sm" onclick="nav('members')">View All</button>
+          </div>
+          <table><thead><tr><th>Username</th><th>Goal</th><th>Level</th><th>Workouts</th></tr></thead>
+            <tbody id="recentMembersTable"><tr class="loading-row"><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Goal Distribution</div>
+          <div class="chart-sub">Real data from your members</div>
+          <div class="bar-chart" id="goalChart"><div style="color:var(--muted);font-size:12px">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="page" id="page-members">
+      <div class="page-header">
+        <div><div class="page-title">All Members</div><div class="page-subtitle" id="memberCountLabel">Loading...</div></div>
+        <button class="btn btn-dark" onclick="openAddMember()">+ Add Member</button>
+      </div>
+      <div class="toolbar">
+        <input class="search-input" type="text" placeholder="🔍 Search username..." oninput="filterMembers(this.value)"/>
+        <select class="filter-select" onchange="filterByGoal(this.value)">
+          <option value="">All Goals</option>
+          <option value="muscle_gain">Muscle Gain</option><option value="weight_loss">Weight Loss</option>
+          <option value="endurance">Endurance</option><option value="general_fitness">General Fitness</option>
+          <option value="flexibility">Flexibility</option><option value="strength">Strength</option>
+          <option value="athletic">Athletic</option>
+        </select>
+        <select class="filter-select" onchange="filterByLevel(this.value)">
+          <option value="">All Levels</option>
+          <option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option>
+        </select>
+      </div>
+      <div class="table-card">
+        <table><thead><tr><th>Username</th><th>Age/BMI</th><th>Goal</th><th>Level</th><th>Workouts</th><th>Calories</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="membersTable"><tr class="loading-row"><td colspan="8">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="page-header"><div><div class="page-title">Analytics</div><div class="page-subtitle">Real insights from database</div></div></div>
+      <div class="kpi-grid" id="analyticsKpis"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">Members by Goal</div><div class="chart-sub">Real distribution</div><div class="bar-chart" id="analyticsGoalChart"><div style="color:var(--muted);font-size:12px">Loading...</div></div></div>
+        <div class="chart-card"><div class="chart-title">Members by Level</div><div class="chart-sub">Fitness level breakdown</div><div class="bar-chart" id="analyticsLevelChart"><div style="color:var(--muted);font-size:12px">Loading...</div></div></div>
+      </div>
+    </div>
+
+    <!-- OCCUPANCY CONTROL -->
+    <div class="page" id="page-occupancy">
+      <div class="page-header">
+        <div><div class="page-title">Gym Occupancy</div><div class="page-subtitle">Set how many people are in the gym — members can see this</div></div>
+      </div>
+      <div class="occ-admin-card">
+        <div class="occ-admin-title">🏋️ Current Gym Count</div>
+        <div class="occ-admin-sub">Drag the slider or use buttons to update. Members see this in real time on their app.</div>
+        <div style="display:flex;align-items:center;gap:24px;margin-bottom:20px;">
+          <div class="occ-big-num" id="adminOccNum">0</div>
+          <div style="flex:1">
+            <div class="occ-bar-track"><div class="occ-bar-fill" id="adminOccBar" style="width:0%;background:var(--green)"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px;">
+              <span>0 people</span><span id="adminOccStatus" style="font-weight:600">Not Crowded</span><span>50 max</span>
+            </div>
+          </div>
+        </div>
+        <input type="range" id="occSlider" min="0" max="50" value="0" class="occ-slider" oninput="updateOccSlider(this.value)"/>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+          <button class="btn btn-outline btn-sm" onclick="quickOcc(0)">Empty (0)</button>
+          <button class="btn btn-outline btn-sm" onclick="quickOcc(10)">10 people</button>
+          <button class="btn btn-outline btn-sm" onclick="quickOcc(20)">20 people</button>
+          <button class="btn btn-outline btn-sm" onclick="quickOcc(30)">30 people</button>
+          <button class="btn btn-outline btn-sm" onclick="quickOcc(40)">40 people</button>
+          <button class="btn btn-outline btn-sm" onclick="quickOcc(50)">Full (50)</button>
+          <button class="btn btn-dark" onclick="saveOccupancy()">💾 SAVE & PUBLISH</button>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Status Guide</div>
+        <div class="chart-sub">What members see based on count</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px;">
+          <div style="padding:16px;background:var(--light);border-left:4px solid #2d8a4e"><div style="font-weight:700;margin-bottom:4px">🟢 Not Crowded</div><div style="font-size:12px;color:var(--muted)">0–14 people</div></div>
+          <div style="padding:16px;background:var(--light);border-left:4px solid #ff9800"><div style="font-weight:700;margin-bottom:4px">🟡 Moderate</div><div style="font-size:12px;color:var(--muted)">15–29 people</div></div>
+          <div style="padding:16px;background:var(--light);border-left:4px solid #ff5722"><div style="font-weight:700;margin-bottom:4px">🟠 Busy</div><div style="font-size:12px;color:var(--muted)">30–42 people</div></div>
+          <div style="padding:16px;background:var(--light);border-left:4px solid #d64045"><div style="font-weight:700;margin-bottom:4px">🔴 Very Crowded</div><div style="font-size:12px;color:var(--muted)">43–50 people</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPMENT — FULLY LIVE & EDITABLE -->
+    <div class="page" id="page-equipment">
+      <div class="page-header">
+        <div><div class="page-title">Equipment</div><div class="page-subtitle">Live — all changes saved to gym_database.json</div></div>
+        <button class="btn btn-dark" onclick="openEquipmentModal()">+ Add Equipment</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <div><div class="table-title">All Equipment</div><div class="table-sub">Click Edit to update condition or status</div></div>
+          <div class="toolbar" style="margin:0">
+            <select class="filter-select" onchange="filterEquipment(this.value)" id="eqStatusFilter">
+              <option value="">All Status</option>
+              <option value="Operational">Operational</option>
+              <option value="Service Due">Service Due</option>
+              <option value="Needs Repair">Needs Repair</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Equipment</th><th>Category</th><th>Qty</th><th>Condition</th><th>Last Service</th><th>Next Service</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="equipmentTable"><tr class="loading-row"><td colspan="8">Loading equipment...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DATA STRUCTURES INFO PAGE -->
+    <div class="page" id="page-datastruct">
+      <div class="page-header">
+        <div><div class="page-title">Data Structures</div><div class="page-subtitle">All data structures used in this app</div></div>
+      </div>
+      <div class="ds-grid">
+        <div class="ds-card">
+          <div class="ds-type">DS #1</div>
+          <div class="ds-name">Hash Map</div>
+          <div class="ds-desc">Python dict used for O(1) user lookup by username, exercise index by category→level, and password hashing via SHA-256.</div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-type">DS #2</div>
+          <div class="ds-name">Sorting</div>
+          <div class="ds-desc">sorted() used for leaderboard (by workout count), exercise recommendations (by calories), equipment list (by name), and member table.</div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-type">DS #3</div>
+          <div class="ds-name">Stack</div>
+          <div class="ds-desc">Workout history uses list.insert(0,...) to push newest workouts to the top — LIFO structure. Last workout is always shown first.</div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-type">DS #4</div>
+          <div class="ds-name">Queue (deque)</div>
+          <div class="ds-desc">collections.deque(maxlen=50) stores the gym occupancy event log. Oldest entries are automatically dropped when full — FIFO.</div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-type">DS #5</div>
+          <div class="ds-name">Set</div>
+          <div class="ds-desc">Python set used to track unique exercise categories, prevent duplicate categories in workout plans, and store active category names.</div>
+        </div>
+        <div class="ds-card">
+          <div class="ds-type">DS #6</div>
+          <div class="ds-name">defaultdict</div>
+          <div class="ds-desc">collections.defaultdict(int) used to count goal and level distribution across all members without manual key initialization.</div>
+        </div>
+        <div class="ds-card" style="border-left-color:var(--blue)">
+          <div class="ds-type" style="color:var(--blue)">DS #7</div>
+          <div class="ds-name">Nested Dict (Index)</div>
+          <div class="ds-desc">EXERCISE_INDEX is a 2-level nested hash map: category → level → [exercises]. Enables O(1) exercise retrieval for recommendations.</div>
+        </div>
+        <div class="ds-card" style="border-left-color:var(--green)">
+          <div class="ds-type" style="color:var(--green)">DS #8</div>
+          <div class="ds-name">List (Array)</div>
+          <div class="ds-desc">Used for workout plans (ordered exercise list), history entries, equipment list, and leaderboard — ordered, indexable collections.</div>
+        </div>
+        <div class="ds-card" style="border-left-color:var(--red)">
+          <div class="ds-type" style="color:var(--red)">DS #9 — Hashing</div>
+          <div class="ds-name">SHA-256 Password Hash</div>
+          <div class="ds-desc">hashlib.sha256() converts passwords into fixed-length hash strings. Passwords are never stored as plain text — only their hash is saved.</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Where Each Data Structure Is Used</div>
+        <div class="chart-sub">Location in the codebase</div>
+        <table style="margin-top:8px">
+          <thead><tr><th>Data Structure</th><th>Location in Code</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Hash Map</strong></td><td>load_db(), EXERCISE_INDEX</td><td>O(1) user & exercise lookup</td></tr>
+            <tr><td><strong>Sorting</strong></td><td>leaderboard(), recommend(), get_equipment()</td><td>Order results by value</td></tr>
+            <tr><td><strong>Stack</strong></td><td>save_workout() → history.insert(0,...)</td><td>Newest workout on top</td></tr>
+            <tr><td><strong>Queue (deque)</strong></td><td>GYM_OCCUPANCY_LOG</td><td>Fixed-size event log</td></tr>
+            <tr><td><strong>Set</strong></td><td>build_exercise_index(), recommend()</td><td>Unique categories, no duplicates</td></tr>
+            <tr><td><strong>defaultdict</strong></td><td>admin_stats()</td><td>Count goals & levels</td></tr>
+            <tr><td><strong>Nested Dict</strong></td><td>EXERCISE_INDEX[cat][level]</td><td>Fast exercise lookup</td></tr>
+            <tr><td><strong>List</strong></td><td>history[], equipment[], exercises[]</td><td>Ordered data collections</td></tr>
+            <tr><td><strong>SHA-256 Hash</strong></td><td>hash_password()</td><td>Secure password storage</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD MEMBER MODAL -->
+<div class="modal-overlay" id="addMemberModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Add New Member</div><button class="modal-close" onclick="closeModal('addMemberModal')">✕</button></div>
+    <div class="modal-body">
+      <div class="mfield-row">
+        <div class="mfield"><label>Username</label><input type="text" id="mUsername" placeholder="john_doe"/></div>
+        <div class="mfield"><label>Password</label><input type="password" id="mPassword" placeholder="Set password"/></div>
+      </div>
+      <div class="mfield-row">
+        <div class="mfield"><label>Age</label><input type="number" id="mAge" placeholder="25"/></div>
+        <div class="mfield"><label>Weight (kg)</label><input type="number" id="mWeight" placeholder="70"/></div>
+      </div>
+      <div class="mfield-row">
+        <div class="mfield"><label>Height (cm)</label><input type="number" id="mHeight" placeholder="170"/></div>
+        <div class="mfield"><label>Fitness Level</label>
+          <select id="mLevel"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select>
+        </div>
+      </div>
+      <div class="mfield"><label>Goal</label>
+        <select id="mGoal">
+          <option value="muscle_gain">Muscle Gain</option><option value="weight_loss">Weight Loss</option>
+          <option value="endurance">Endurance</option><option value="general_fitness">General Fitness</option>
+          <option value="flexibility">Flexibility</option><option value="strength">Strength</option>
+          <option value="athletic">Athletic Performance</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addMemberModal')">Cancel</button>
+      <button class="btn btn-dark" onclick="addMember()">Add to Database</button>
+    </div>
+  </div>
+</div>
+
+<!-- EQUIPMENT MODAL -->
+<div class="modal-overlay" id="equipmentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="eqModalTitle">Add Equipment</div>
+      <button class="modal-close" onclick="closeModal('equipmentModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eqId"/>
+      <div class="mfield-row">
+        <div class="mfield"><label>Equipment Name</label><input type="text" id="eqName" placeholder="e.g. Treadmill"/></div>
+        <div class="mfield"><label>Category</label>
+          <select id="eqCategory">
+            <option>Cardio</option><option>Free Weights</option><option>Strength</option>
+            <option>Cable Machine</option><option>Bodyweight</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="mfield-row">
+        <div class="mfield"><label>Quantity</label><input type="number" id="eqQty" placeholder="1" min="1"/></div>
+        <div class="mfield"><label>Condition</label>
+          <select id="eqCondition">
+            <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+          </select>
+        </div>
+      </div>
+      <div class="mfield"><label>Status</label>
+        <select id="eqStatus">
+          <option>Operational</option><option>Service Due</option><option>Needs Repair</option><option>Out of Service</option>
+        </select>
+      </div>
+      <div class="mfield-row">
+        <div class="mfield"><label>Last Serviced</label><input type="date" id="eqLastService"/></div>
+        <div class="mfield"><label>Next Service</label><input type="date" id="eqNextService"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('equipmentModal')">Cancel</button>
+      <button class="btn btn-dark" onclick="saveEquipment()">Save Equipment</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="historyModalTitle">Workout History</div><button class="modal-close" onclick="closeModal('historyModal')">✕</button></div>
+    <div class="modal-body" id="historyModalBody">Loading...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allMembers=[], allEquipment=[];
+let filterSearch='', filterGoal='', filterLevel='', filterEqStatus='';
+let currentOccCount=0;
+
+async function api(method,url,body=null){
+  const opts={method,headers:{'Content-Type':'application/json'},credentials:'same-origin'};
+  if(body) opts.body=JSON.stringify(body);
+  try{const res=await fetch(url,opts);return await res.json();}
+  catch(e){return{success:false,message:'Server error'};}
+}
+
+/* OCCUPANCY helpers */
+function occColor(pct){
+  if(pct<30) return '#2d8a4e';
+  if(pct<60) return '#ff9800';
+  if(pct<85) return '#ff5722';
+  return '#d64045';
+}
+function occStatusLabel(s){
+  const m={'Not Crowded':'🟢 Not Crowded','Moderate':'🟡 Moderate','Busy':'🟠 Busy','Very Crowded':'🔴 Very Crowded'};
+  return m[s]||s;
+}
+
+async function loadHeaderOccupancy(){
+  const data=await api('GET','/api/gym/occupancy');
+  if(!data.success) return;
+  const col=occColor(data.percentage);
+  document.getElementById('hOccDot').style.background=col;
+  document.getElementById('hOccText').textContent=`${data.count} in gym · ${data.status}`;
+  currentOccCount=data.count;
+}
+
+loadHeaderOccupancy();
+setInterval(loadHeaderOccupancy,30000);
+
+/* AUTH */
+async function doAdminLogin(){
+  const password=document.getElementById('adminPass').value;
+  if(!password){toast('Enter password','error');return;}
+  const data=await api('POST','/api/admin/login',{password});
+  if(!data.success){toast(data.message||'Wrong password','error');return;}
+  document.getElementById('loginScreen').style.opacity='0';
+  document.getElementById('loginScreen').style.pointerEvents='none';
+  setTimeout(()=>document.getElementById('loginScreen').style.display='none',500);
+  document.getElementById('adminPass').value='';
+  toast('Welcome, Owner!','success');
+  nav('dashboard');
+}
+
+async function doLogout(){
+  await api('POST','/api/admin/logout');
+  document.getElementById('loginScreen').style.display='flex';
+  requestAnimationFrame(()=>{document.getElementById('loginScreen').style.opacity='1';document.getElementById('loginScreen').style.pointerEvents='all';});
+}
+
+/* NAV */
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const el=document.querySelector(`[data-page="${page}"]`);
+  if(el) el.classList.add('active');
+  const renders={dashboard:renderDashboard,members:renderMembers,analytics:renderAnalytics,equipment:renderEquipment,occupancy:renderOccupancy};
+  if(renders[page]) renders[page]();
+}
+
+/* HELPERS */
+function goalLabel(g){return(g||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());}
+function levelBadge(l){
+  const m={beginner:'badge-green',intermediate:'badge-gold',advanced:'badge-red'};
+  return `<span class="badge ${m[l]||'badge-grey'}">${l||'—'}</span>`;
+}
+function condBadge(c){
+  const m={Excellent:'badge-green',Good:'badge-green',Fair:'badge-gold',Poor:'badge-red'};
+  return `<span class="badge ${m[c]||'badge-grey'}">${c||'—'}</span>`;
+}
+function statusBadge(s){
+  const m={Operational:'badge-green','Service Due':'badge-gold','Needs Repair':'badge-red','Out of Service':'badge-red'};
+  return `<span class="badge ${m[s]||'badge-grey'}">${s||'—'}</span>`;
+}
+
+/* DASHBOARD */
+async function renderDashboard(){
+  document.getElementById('dashDate').textContent=`Live data — ${new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+  const stats=await api('GET','/api/admin/stats');
+  if(!stats.success) return;
+  document.getElementById('memberCountHeader').textContent=`${stats.total_members} members`;
+  document.getElementById('dashKpis').innerHTML=`
+    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-value">${stats.total_members}</div><div class="kpi-label">Total Members</div><div class="kpi-change up">In database</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🔥</div><div class="kpi-value">${stats.total_workouts}</div><div class="kpi-label">Total Workouts</div><div class="kpi-change up">Completed</div></div>
+    <div class="kpi-card"><div class="kpi-icon">⚡</div><div class="kpi-value">${(stats.total_calories/1000).toFixed(1)}k</div><div class="kpi-label">Total kcal Burned</div><div class="kpi-change up">All members</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🏋️</div><div class="kpi-value">${stats.gym_count}</div><div class="kpi-label">In Gym Now</div><div class="kpi-change up">Live count</div></div>`;
+  const goals=stats.goal_distribution;
+  const maxG=Math.max(...Object.values(goals),1);
+  document.getElementById('goalChart').innerHTML=Object.keys(goals).length
+    ? Object.entries(goals).map(([g,c])=>`<div class="bar-row"><div class="bar-label">${goalLabel(g)}</div><div class="bar-track"><div class="bar-fill gold" style="width:${Math.max(10,(c/maxG)*100)}%"><span class="bar-val">${c}</span></div></div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:12px">No members yet</div>';
+  const md=await api('GET','/api/admin/members');
+  if(md.success){
+    allMembers=md.members;
+    document.getElementById('recentMembersTable').innerHTML=allMembers.length
+      ? allMembers.slice(0,6).map(m=>`<tr><td><div class="member-name">${m.username}</div><div class="member-sub">Joined ${m.joined}</div></td><td>${goalLabel(m.goal)}</td><td>${levelBadge(m.level)}</td><td><strong>${m.workout_count}</strong></td></tr>`).join('')
+      : '<tr class="loading-row"><td colspan="4">No members yet. Register at localhost:5000!</td></tr>';
+  }
+}
+
+/* MEMBERS */
+async function renderMembers(){
+  document.getElementById('membersTable').innerHTML='<tr class="loading-row"><td colspan="8">Fetching...</td></tr>';
+  const data=await api('GET','/api/admin/members');
+  if(!data.success){toast('Failed to load','error');return;}
+  allMembers=data.members;
+  renderMembersTable();
+}
+function renderMembersTable(){
+  let list=allMembers.filter(m=>
+    (!filterSearch||m.username.toLowerCase().includes(filterSearch))&&
+    (!filterGoal||m.goal===filterGoal)&&
+    (!filterLevel||m.level===filterLevel)
+  );
+  document.getElementById('memberCountLabel').textContent=`${list.length} of ${allMembers.length} members`;
+  document.getElementById('membersTable').innerHTML=list.length
+    ? list.map(m=>`<tr>
+        <td><div class="member-name">${m.username}</div></td>
+        <td>${m.age}y / <strong>BMI ${m.bmi}</strong><br><span style="font-size:11px;color:var(--muted)">${m.bmi_category}</span></td>
+        <td>${goalLabel(m.goal)}</td>
+        <td>${levelBadge(m.level)}</td>
+        <td><strong>${m.workout_count}</strong></td>
+        <td class="text-green">${m.total_calories.toLocaleString()} kcal</td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px">${m.joined}</td>
+        <td><div class="flex gap-8">
+          <button class="btn btn-outline btn-sm" onclick="viewHistory('${m.username}')">History</button>
+          <button class="btn btn-red btn-sm" onclick="removeMember('${m.username}')">Remove</button>
+        </div></td>
+      </tr>`).join('')
+    : '<tr class="loading-row"><td colspan="8">No members found</td></tr>';
+}
+function filterMembers(v){filterSearch=v.toLowerCase();renderMembersTable();}
+function filterByGoal(v){filterGoal=v;renderMembersTable();}
+function filterByLevel(v){filterLevel=v;renderMembersTable();}
+
+async function viewHistory(username){
+  document.getElementById('historyModalTitle').textContent=`${username} — History`;
+  document.getElementById('historyModalBody').innerHTML='Loading...';
+  openModal('historyModal');
+  const data=await api('GET',`/api/admin/members/${username}/history`);
+  document.getElementById('historyModalBody').innerHTML=data.history&&data.history.length
+    ? data.history.map(h=>`<div class="history-item"><div class="history-date">${h.date}</div><div class="history-goal">${goalLabel(h.goal)} · ${h.level}</div><div class="history-cal">${h.total_calories} kcal</div></div>`).join('')
+    : '<div class="empty">No workouts yet for this member</div>';
+}
+
+async function removeMember(username){
+  if(!confirm(`Remove ${username} from database?`)) return;
+  const data=await api('DELETE',`/api/admin/members/${username}`);
+  if(data.success){toast(`${username} removed`,'error');renderMembers();}
+  else toast(data.message,'error');
+}
+
+function openAddMember(){openModal('addMemberModal');}
+async function addMember(){
+  const payload={username:document.getElementById('mUsername').value.trim(),password:document.getElementById('mPassword').value||'changeme123',age:parseInt(document.getElementById('mAge').value)||25,weight:parseFloat(document.getElementById('mWeight').value)||70,height:parseFloat(document.getElementById('mHeight').value)||170,goal:document.getElementById('mGoal').value,level:document.getElementById('mLevel').value};
+  if(!payload.username){toast('Username required','error');return;}
+  const data=await api('POST','/api/admin/members',payload);
+  if(data.success){closeModal('addMemberModal');toast(`${payload.username} added!`,'success');['mUsername','mPassword','mAge','mWeight','mHeight'].forEach(id=>document.getElementById(id).value='');renderMembers();}
+  else toast(data.message,'error');
+}
+
+/* ANALYTICS */
+async function renderAnalytics(){
+  const stats=await api('GET','/api/admin/stats');
+  if(!stats.success) return;
+  const avg=stats.total_members>0?(stats.total_workouts/stats.total_members).toFixed(1):0;
+  document.getElementById('analyticsKpis').innerHTML=`
+    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-value">${stats.total_members}</div><div class="kpi-label">Total Members</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🔥</div><div class="kpi-value">${stats.total_workouts}</div><div class="kpi-label">Total Workouts</div></div>
+    <div class="kpi-card"><div class="kpi-icon">📊</div><div class="kpi-value">${avg}</div><div class="kpi-label">Avg Workouts/Member</div></div>
+    <div class="kpi-card"><div class="kpi-icon">⚡</div><div class="kpi-value">${Math.round(stats.total_calories/1000)}k</div><div class="kpi-label">Total kcal Burned</div></div>`;
+  const goals=stats.goal_distribution; const maxG=Math.max(...Object.values(goals),1);
+  const gc=['','gold','green','blue',''];
+  document.getElementById('analyticsGoalChart').innerHTML=Object.keys(goals).length
+    ? Object.entries(goals).map(([g,c],i)=>`<div class="bar-row"><div class="bar-label">${goalLabel(g)}</div><div class="bar-track"><div class="bar-fill ${gc[i]||''}" style="width:${Math.max(10,(c/maxG)*100)}%"><span class="bar-val">${c}</span></div></div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:12px">No data</div>';
+  const levels=stats.level_distribution; const maxL=Math.max(...Object.values(levels),1);
+  const lc={beginner:'green',intermediate:'gold',advanced:''};
+  document.getElementById('analyticsLevelChart').innerHTML=Object.keys(levels).length
+    ? Object.entries(levels).map(([l,c])=>`<div class="bar-row"><div class="bar-label">${l}</div><div class="bar-track"><div class="bar-fill ${lc[l]||''}" style="width:${Math.max(10,(c/maxL)*100)}%"><span class="bar-val">${c}</span></div></div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:12px">No data</div>';
+}
+
+/* OCCUPANCY CONTROL */
+async function renderOccupancy(){
+  const data=await api('GET','/api/gym/occupancy');
+  if(!data.success) return;
+  currentOccCount=data.count;
+  document.getElementById('occSlider').value=data.count;
+  updateOccSlider(data.count);
+}
+function updateOccSlider(val){
+  val=parseInt(val);
+  document.getElementById('occSlider').value=val;
+  document.getElementById('adminOccNum').textContent=val;
+  const pct=(val/50)*100;
+  const col=occColor(pct);
+  document.getElementById('adminOccBar').style.width=pct+'%';
+  document.getElementById('adminOccBar').style.background=col;
+  let status='Not Crowded';
+  if(pct>=85) status='Very Crowded';
+  else if(pct>=60) status='Busy';
+  else if(pct>=30) status='Moderate';
+  document.getElementById('adminOccStatus').textContent=occStatusLabel(status);
+  document.getElementById('adminOccStatus').style.color=col;
+  currentOccCount=val;
+}
+function quickOcc(val){updateOccSlider(val);}
+async function saveOccupancy(){
+  const data=await api('PUT','/api/admin/occupancy',{count:currentOccCount,action:'admin update'});
+  if(data.success){toast(`Gym count set to ${data.count} — members can see this now!`,'success');loadHeaderOccupancy();}
+  else toast(data.message,'error');
+}
+
+/* EQUIPMENT — LIVE & EDITABLE */
+async function renderEquipment(){
+  document.getElementById('equipmentTable').innerHTML='<tr class="loading-row"><td colspan="8">Loading from database...</td></tr>';
+  const data=await api('GET','/api/admin/equipment');
+  if(!data.success){toast('Failed to load equipment','error');return;}
+  allEquipment=data.equipment;
+  renderEquipmentTable();
+}
+function renderEquipmentTable(){
+  let list=allEquipment.filter(e=>!filterEqStatus||e.status===filterEqStatus);
+  document.getElementById('equipmentTable').innerHTML=list.length
+    ? list.map(e=>`<tr>
+        <td><div class="member-name">${e.name}</div></td>
+        <td>${e.category}</td>
+        <td><strong>${e.quantity}</strong></td>
+        <td>${condBadge(e.condition)}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px">${e.last_service}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:11px">${e.next_service}</td>
+        <td>${statusBadge(e.status)}</td>
+        <td><div class="flex gap-8">
+          <button class="btn btn-outline btn-sm" onclick="editEquipment(${e.id})">Edit</button>
+          <button class="btn btn-red btn-sm" onclick="deleteEquipment(${e.id},'${e.name}')">Delete</button>
+        </div></td>
+      </tr>`).join('')
+    : '<tr class="loading-row"><td colspan="8">No equipment found</td></tr>';
+}
+function filterEquipment(v){filterEqStatus=v;renderEquipmentTable();}
+
+function openEquipmentModal(eq=null){
+  document.getElementById('eqModalTitle').textContent=eq?'Edit Equipment':'Add Equipment';
+  document.getElementById('eqId').value=eq?eq.id:'';
+  document.getElementById('eqName').value=eq?eq.name:'';
+  document.getElementById('eqCategory').value=eq?eq.category:'Cardio';
+  document.getElementById('eqQty').value=eq?eq.quantity:1;
+  document.getElementById('eqCondition').value=eq?eq.condition:'Good';
+  document.getElementById('eqStatus').value=eq?eq.status:'Operational';
+  document.getElementById('eqLastService').value=eq?eq.last_service:'';
+  document.getElementById('eqNextService').value=eq?eq.next_service:'';
+  openModal('equipmentModal');
+}
+function editEquipment(id){
+  const eq=allEquipment.find(e=>e.id===id);
+  if(eq) openEquipmentModal(eq);
+}
+
+async function saveEquipment(){
+  const id=document.getElementById('eqId').value;
+  const payload={
+    name:document.getElementById('eqName').value.trim(),
+    category:document.getElementById('eqCategory').value,
+    quantity:parseInt(document.getElementById('eqQty').value)||1,
+    condition:document.getElementById('eqCondition').value,
+    status:document.getElementById('eqStatus').value,
+    last_service:document.getElementById('eqLastService').value,
+    next_service:document.getElementById('eqNextService').value,
+  };
+  if(!payload.name){toast('Equipment name required','error');return;}
+  let data;
+  if(id){
+    data=await api('PUT',`/api/admin/equipment/${id}`,payload);
+  } else {
+    data=await api('POST','/api/admin/equipment',payload);
+  }
+  if(data.success){closeModal('equipmentModal');toast(data.message,'success');renderEquipment();}
+  else toast(data.message,'error');
+}
+
+async function deleteEquipment(id,name){
+  if(!confirm(`Delete ${name}?`)) return;
+  const data=await api('DELETE',`/api/admin/equipment/${id}`);
+  if(data.success){toast(`${name} deleted`,'error');renderEquipment();}
+  else toast(data.message,'error');
+}
+
+/* MODAL */
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o) o.classList.remove('open');});
+});
+
+/* TOAST */
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(type?' '+type:'');
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

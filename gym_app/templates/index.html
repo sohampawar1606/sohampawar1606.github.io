@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IRONCORE — Gym App</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root{--bg:#0a0a0a;--surface:#111;--card:#161616;--border:#2a2a2a;--accent:#c8f135;--accent2:#ff4d4d;--text:#e8e8e8;--muted:#666;--dim:#333;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;overflow-x:hidden;}
+  ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--accent);}
+  /* AUTH */
+  .auth-screen{position:fixed;inset:0;background:var(--bg);display:flex;z-index:500;transition:opacity 0.5s;}
+  .auth-left{flex:1;background:var(--accent);display:flex;flex-direction:column;justify-content:flex-end;padding:60px;position:relative;overflow:hidden;}
+  .auth-left::before{content:'IRON\ACORE';white-space:pre;font-family:'Bebas Neue',sans-serif;font-size:160px;line-height:0.85;color:rgba(0,0,0,0.12);position:absolute;top:40px;left:40px;letter-spacing:8px;}
+  .auth-tagline{font-family:'Bebas Neue',sans-serif;font-size:56px;color:#000;letter-spacing:3px;line-height:1;position:relative;z-index:1;}
+  .auth-sub{font-size:12px;color:rgba(0,0,0,0.6);letter-spacing:2px;text-transform:uppercase;margin-top:12px;position:relative;z-index:1;}
+  .auth-right{width:480px;flex-shrink:0;padding:60px;display:flex;flex-direction:column;justify-content:center;border-left:1px solid var(--border);}
+  .auth-title{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:4px;margin-bottom:8px;}
+  .auth-toggle{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:36px;}
+  .auth-toggle span{color:var(--accent);cursor:pointer;text-decoration:underline;}
+  .auth-form{display:flex;flex-direction:column;gap:16px;}
+  .auth-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  /* OCCUPANCY WIDGET on login */
+  .occ-widget{background:var(--card);border:1px solid var(--border);padding:16px 20px;margin-bottom:20px;}
+  .occ-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .occ-bar-track{height:8px;background:var(--dim);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+  .occ-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
+  .occ-info{display:flex;justify-content:space-between;font-size:11px;}
+  .occ-count{color:var(--accent);}
+  .occ-status{color:var(--muted);}
+  /* HEADER */
+  header{border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.95);backdrop-filter:blur(12px);}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--accent);}
+  .logo span{color:var(--text);}
+  .header-status{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  /* OCCUPANCY HEADER CHIP */
+  .occ-chip{font-size:10px;letter-spacing:1px;padding:4px 10px;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .occ-chip .odot{width:6px;height:6px;border-radius:50%;}
+  /* LAYOUT */
+  .app{display:flex;min-height:calc(100vh - 64px);}
+  .sidebar{width:220px;flex-shrink:0;border-right:1px solid var(--border);padding:32px 0;display:flex;flex-direction:column;}
+  .nav-item{padding:14px 32px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;display:flex;align-items:center;gap:12px;}
+  .nav-item:hover,.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(200,241,53,0.04);}
+  .nav-icon{font-size:16px;width:20px;text-align:center;}
+  .sidebar-footer{margin-top:auto;padding:24px 32px;border-top:1px solid var(--border);font-size:10px;color:var(--dim);letter-spacing:1px;}
+  /* CONTENT */
+  .content{flex:1;padding:40px;overflow-y:auto;}
+  .page{display:none;animation:fadeIn 0.3s ease;}
+  .page.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .page-title{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:3px;line-height:1;margin-bottom:4px;}
+  .page-title .accent{color:var(--accent);}
+  .page-subtitle{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:40px;}
+  .section-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  /* FORMS */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:640px;}
+  .form-full{grid-column:1/-1;}
+  .field{display:flex;flex-direction:column;gap:8px;}
+  .field label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .field input,.field select{background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px 16px;font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color 0.2s;appearance:none;}
+  .field input:focus,.field select:focus{border-color:var(--accent);}
+  .field select option{background:var(--card);}
+  /* BUTTONS */
+  .btn{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:14px 32px;cursor:pointer;border:none;transition:all 0.2s;}
+  .btn-primary{background:var(--accent);color:#000;}
+  .btn-primary:hover{background:#d4ff3d;transform:translateY(-1px);}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:40px;}
+  .stat-card{background:var(--card);padding:24px;}
+  .stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .stat-value{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--accent);letter-spacing:2px;}
+  .stat-unit{font-size:12px;color:var(--muted);margin-top:2px;}
+  /* OCCUPANCY CARD */
+  .occ-card{background:var(--card);border:1px solid var(--border);padding:24px;margin-bottom:32px;}
+  .occ-card-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;margin-bottom:4px;}
+  .occ-card-bar{height:12px;background:var(--dim);border-radius:6px;overflow:hidden;margin:12px 0;}
+  .occ-card-fill{height:100%;border-radius:6px;transition:width 0.6s ease;}
+  .occ-card-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);}
+  /* EXERCISE */
+  .exercise-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;background:var(--border);}
+  .exercise-card{background:var(--card);padding:24px;position:relative;overflow:hidden;transition:background 0.15s;}
+  .exercise-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);transform:scaleY(0);transition:transform 0.2s;transform-origin:bottom;}
+  .exercise-card:hover{background:#1c1c1c;}
+  .exercise-card:hover::before{transform:scaleY(1);}
+  .ex-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:1px;margin-bottom:12px;}
+  .ex-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:3px 8px;border:1px solid var(--border);color:var(--muted);}
+  .tag.beginner{border-color:#4caf50;color:#4caf50;}
+  .tag.intermediate{border-color:#ff9800;color:#ff9800;}
+  .tag.advanced{border-color:var(--accent2);color:var(--accent2);}
+  .ex-meta{display:flex;gap:20px;font-size:11px;color:var(--muted);}
+  .ex-meta span{display:flex;flex-direction:column;gap:2px;}
+  .ex-meta strong{color:var(--text);font-size:16px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+  /* PLAN */
+  .plan-header{background:var(--accent);color:#000;padding:24px 32px;margin-bottom:1px;display:flex;justify-content:space-between;align-items:center;}
+  .plan-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;}
+  .plan-calories{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:2px;}
+  .plan-calories-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:0.7;}
+  .plan-exercises{background:var(--border);display:grid;gap:1px;}
+  .plan-exercise-row{background:var(--card);padding:20px 24px;display:grid;grid-template-columns:32px 1fr auto auto auto;align-items:center;gap:24px;}
+  .plan-exercise-row:hover{background:#1a1a1a;}
+  .row-num{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--dim);}
+  .row-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:600;}
+  .row-val{text-align:center;}
+  .row-val .v{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);}
+  .row-val .l{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  /* HISTORY */
+  .history-item{border:1px solid var(--border);padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;gap:24px;transition:border-color 0.2s;}
+  .history-item:hover{border-color:var(--accent);}
+  .history-date{font-size:11px;color:var(--muted);letter-spacing:1px;min-width:100px;}
+  .history-goal{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:600;text-transform:uppercase;flex:1;}
+  .history-cal{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);}
+  /* SEARCH */
+  .search-bar{display:flex;margin-bottom:32px;max-width:500px;}
+  .search-bar input{flex:1;background:var(--card);border:1px solid var(--border);border-right:none;color:var(--text);padding:14px 20px;font-family:'DM Mono',monospace;font-size:13px;outline:none;}
+  .search-bar input:focus{border-color:var(--accent);}
+  .search-bar button{background:var(--accent);color:#000;border:none;padding:0 24px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
+  /* PILLS */
+  .category-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+  .pill{font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:8px 16px;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all 0.2s;background:transparent;font-family:'DM Mono',monospace;}
+  .pill:hover,.pill.active{border-color:var(--accent);color:var(--accent);background:rgba(200,241,53,0.06);}
+  /* LEADERBOARD */
+  .leaderboard-row{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:20px;padding:16px 24px;border-bottom:1px solid var(--border);transition:background 0.15s;}
+  .leaderboard-row:hover{background:var(--card);}
+  .lb-rank{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--dim);}
+  .lb-rank.gold{color:#ffd700;} .lb-rank.silver{color:#c0c0c0;} .lb-rank.bronze{color:#cd7f32;}
+  .lb-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:600;}
+  .lb-count{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent);}
+  /* BMI */
+  .bmi-bar{height:4px;background:var(--border);position:relative;margin:8px 0;border-radius:2px;}
+  .bmi-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.6s ease;}
+  /* TOAST */
+  .toast{position:fixed;bottom:32px;right:32px;background:var(--card);border:1px solid var(--accent);color:var(--text);padding:16px 24px;font-size:12px;letter-spacing:1px;z-index:9000;transform:translateY(80px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:320px;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{border-color:var(--accent2);}
+  .mt-8{margin-top:8px;} .mt-16{margin-top:16px;} .mt-24{margin-top:24px;} .mt-32{margin-top:32px;}
+  .flex{display:flex;} .gap-12{gap:12px;} .hidden{display:none!important;}
+  .loading{text-align:center;padding:60px;color:var(--muted);font-size:11px;letter-spacing:3px;}
+  .empty-state{text-align:center;padding:80px 40px;color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<!-- AUTH -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-left">
+    <div class="auth-tagline">TRAIN<br>SMARTER.<br>LIFT<br>HARDER.</div>
+    <div class="auth-sub">Powered by Python · Flask · Real Database</div>
+  </div>
+  <div class="auth-right">
+    <div id="loginPanel">
+      <div class="auth-title">SIGN IN</div>
+      <div class="auth-toggle">No account? <span onclick="showRegister()">Register here</span></div>
+      <!-- LIVE OCCUPANCY on login screen -->
+      <div class="occ-widget" id="loginOccWidget">
+        <div class="occ-title">🏋️ Gym Status Right Now</div>
+        <div class="occ-bar-track"><div class="occ-bar-fill" id="loginOccBar" style="width:0%;background:#c8f135"></div></div>
+        <div class="occ-info"><span class="occ-count" id="loginOccCount">Loading...</span><span class="occ-status" id="loginOccStatus"></span></div>
+      </div>
+      <div class="auth-form">
+        <div class="field"><label>Username</label><input type="text" id="loginUser" placeholder="your_username"/></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <button class="btn btn-primary mt-8" onclick="doLogin()">ENTER THE GYM →</button>
+      </div>
+    </div>
+    <div id="registerPanel" class="hidden">
+      <div class="auth-title">REGISTER</div>
+      <div class="auth-toggle">Have account? <span onclick="showLogin()">Sign in</span></div>
+      <div class="auth-form">
+        <div class="auth-row">
+          <div class="field"><label>Username</label><input type="text" id="regUser" placeholder="ironman_99"/></div>
+          <div class="field"><label>Password</label><input type="password" id="regPass" placeholder="••••••••"/></div>
+        </div>
+        <div class="auth-row">
+          <div class="field"><label>Age</label><input type="number" id="regAge" placeholder="25"/></div>
+          <div class="field"><label>Weight (kg)</label><input type="number" id="regWeight" placeholder="75" step="0.1"/></div>
+        </div>
+        <div class="auth-row">
+          <div class="field"><label>Height (cm)</label><input type="number" id="regHeight" placeholder="175"/></div>
+          <div class="field"><label>Fitness Level</label>
+            <select id="regLevel"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Goal</label>
+          <select id="regGoal">
+            <option value="muscle_gain">Muscle Gain</option>
+            <option value="weight_loss">Weight Loss</option>
+            <option value="endurance">Endurance</option>
+            <option value="general_fitness">General Fitness</option>
+            <option value="flexibility">Flexibility</option>
+            <option value="strength">Strength</option>
+            <option value="athletic">Athletic Performance</option>
+          </select>
+        </div>
+        <button class="btn btn-primary mt-8" onclick="doRegister()">CREATE ACCOUNT →</button>
+        <button class="btn btn-ghost" onclick="showLogin()">BACK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">IRON<span>CORE</span></div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="occ-chip" id="headerOccChip">
+      <span class="odot" id="headerOccDot" style="background:var(--muted)"></span>
+      <span id="headerOccText">Loading gym status...</span>
+    </div>
+    <div class="header-status"><span class="dot"></span><span id="headerUser">GUEST</span></div>
+  </div>
+</header>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="nav-item active" onclick="nav('dashboard')" data-page="dashboard"><span class="nav-icon">◈</span> Dashboard</div>
+    <div class="nav-item" onclick="nav('workout')" data-page="workout"><span class="nav-icon">⚡</span> Get Workout</div>
+    <div class="nav-item" onclick="nav('exercises')" data-page="exercises"><span class="nav-icon">◎</span> Exercises</div>
+    <div class="nav-item" onclick="nav('history')" data-page="history"><span class="nav-icon">▤</span> History</div>
+    <div class="nav-item" onclick="nav('leaderboard')" data-page="leaderboard"><span class="nav-icon">△</span> Leaderboard</div>
+    <div class="nav-item" onclick="nav('profile')" data-page="profile"><span class="nav-icon">◉</span> Profile</div>
+    <div class="sidebar-footer">
+      <div style="margin-bottom:8px">IRONCORE v3.0</div>
+      <div style="margin-bottom:4px;color:var(--accent);font-size:9px">● FLASK CONNECTED</div>
+      <div style="cursor:pointer;color:#ff4d4d" onclick="doLogout()">[ LOGOUT ]</div>
+    </div>
+  </nav>
+
+  <main class="content">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">DASH<span class="accent">BOARD</span></div>
+      <div class="page-subtitle">Your fitness command center</div>
+      <!-- GYM OCCUPANCY CARD -->
+      <div class="occ-card" id="dashOccCard">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div class="occ-card-title">🏋️ GYM STATUS</div>
+            <div style="font-size:11px;color:var(--muted);letter-spacing:1px">Live occupancy — updated by admin</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--accent);line-height:1" id="occBigCount">—</div>
+            <div style="font-size:10px;color:var(--muted);letter-spacing:2px">PEOPLE IN GYM</div>
+          </div>
+        </div>
+        <div class="occ-card-bar"><div class="occ-card-fill" id="occCardBar" style="width:0%"></div></div>
+        <div class="occ-card-meta">
+          <span id="occCardStatus">Loading...</span>
+          <span id="occCardPct">0 / 50 capacity</span>
+        </div>
+      </div>
+      <div class="stats-grid" id="dashStats"><div class="stat-card loading" style="grid-column:1/-1">Loading...</div></div>
+      <div class="section-label">RECOMMENDED TODAY</div>
+      <div id="dashRecommend"><div class="loading">Fetching recommendations...</div></div>
+    </div>
+
+    <!-- WORKOUT -->
+    <div class="page" id="page-workout">
+      <div class="page-title">GET<span class="accent"> PLAN</span></div>
+      <div class="page-subtitle">Python-powered workout recommendation</div>
+      <div class="section-label">CUSTOMIZE</div>
+      <div class="form-grid" style="max-width:500px;margin-bottom:32px">
+        <div class="field"><label>Override Goal</label>
+          <select id="workoutGoal">
+            <option value="">Use my profile goal</option>
+            <option value="muscle_gain">Muscle Gain</option>
+            <option value="weight_loss">Weight Loss</option>
+            <option value="endurance">Endurance</option>
+            <option value="general_fitness">General Fitness</option>
+            <option value="flexibility">Flexibility</option>
+            <option value="strength">Strength</option>
+            <option value="athletic">Athletic Performance</option>
+          </select>
+        </div>
+        <div class="field"><label>Override Level</label>
+          <select id="workoutLevel">
+            <option value="">Use my profile level</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="generateWorkout()">⚡ GENERATE WORKOUT</button>
+      <div id="workoutResult" class="mt-32"></div>
+    </div>
+
+    <!-- EXERCISES -->
+    <div class="page" id="page-exercises">
+      <div class="page-title">EXER<span class="accent">CISES</span></div>
+      <div class="page-subtitle">Full exercise database — 70+ exercises</div>
+      <div class="search-bar">
+        <input type="text" id="exSearch" placeholder="search exercises..." onkeydown="if(event.key==='Enter')searchExercises()"/>
+        <button onclick="searchExercises()">SEARCH</button>
+      </div>
+      <div class="category-pills" id="catPills"></div>
+      <div class="section-label" id="exSectionLabel">ALL EXERCISES</div>
+      <div class="exercise-grid" id="exerciseGrid"><div class="loading">Loading exercises...</div></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="page-title">HIS<span class="accent">TORY</span></div>
+      <div class="page-subtitle">Your past sessions — stored in gym_database.json</div>
+      <div id="historyList"><div class="loading">Loading history...</div></div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="page" id="page-leaderboard">
+      <div class="page-title">LEADER<span class="accent">BOARD</span></div>
+      <div class="page-subtitle">Sorted by Python backend</div>
+      <div id="leaderboardList"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="page-title">PRO<span class="accent">FILE</span></div>
+      <div class="page-subtitle">Your stats — saved to gym_database.json</div>
+      <div id="profileContent"><div class="loading">Loading profile...</div></div>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null;
+let lastPlan = null;
+let activeCategory = 'all';
+
+async function api(method, url, body=null){
+  const opts={method,headers:{'Content-Type':'application/json'},credentials:'same-origin'};
+  if(body) opts.body=JSON.stringify(body);
+  const res=await fetch(url,opts); return res.json();
+}
+
+/* OCCUPANCY helpers */
+function occColor(pct){
+  if(pct<30) return '#c8f135';
+  if(pct<60) return '#ff9800';
+  if(pct<85) return '#ff5722';
+  return '#ff4d4d';
+}
+function occLabel(status){
+  const map={'Not Crowded':'🟢 Not Crowded','Moderate':'🟡 Moderate','Busy':'🟠 Busy','Very Crowded':'🔴 Very Crowded'};
+  return map[status]||status;
+}
+
+async function loadOccupancy(){
+  try {
+    const data = await api('GET','/api/gym/occupancy');
+    if(!data.success) return;
+    const pct=data.percentage; const col=occColor(pct);
+    // login widget
+    const lb=document.getElementById('loginOccBar');
+    if(lb){lb.style.width=pct+'%';lb.style.background=col;}
+    const lc=document.getElementById('loginOccCount');
+    if(lc) lc.textContent=`${data.count} / ${data.max_capacity} people`;
+    const ls=document.getElementById('loginOccStatus');
+    if(ls){ls.textContent=occLabel(data.status);ls.style.color=col;}
+    // header chip
+    document.getElementById('headerOccDot').style.background=col;
+    document.getElementById('headerOccText').textContent=`${data.count} in gym · ${data.status}`;
+    // dashboard card
+    const bc=document.getElementById('occBigCount');
+    if(bc) bc.textContent=data.count;
+    const bar=document.getElementById('occCardBar');
+    if(bar){bar.style.width=pct+'%';bar.style.background=col;}
+    const st=document.getElementById('occCardStatus');
+    if(st){st.textContent=occLabel(data.status);st.style.color=col;}
+    const pc=document.getElementById('occCardPct');
+    if(pc) pc.textContent=`${data.count} / ${data.max_capacity} max capacity`;
+  } catch(e){}
+}
+
+// Refresh occupancy every 30 seconds
+loadOccupancy();
+setInterval(loadOccupancy, 30000);
+
+/* AUTH */
+function showLogin(){document.getElementById('loginPanel').classList.remove('hidden');document.getElementById('registerPanel').classList.add('hidden');}
+function showRegister(){document.getElementById('loginPanel').classList.add('hidden');document.getElementById('registerPanel').classList.remove('hidden');}
+
+async function doLogin(){
+  const username=document.getElementById('loginUser').value.trim();
+  const password=document.getElementById('loginPass').value;
+  if(!username||!password){toast('Fill in all fields',true);return;}
+  const data=await api('POST','/api/login',{username,password});
+  if(!data.success){toast(data.message,true);return;}
+  currentUser=data.user;
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('headerUser').textContent=username.toUpperCase();
+  toast(`Welcome back, ${username}!`);
+  nav('dashboard');
+}
+
+async function doRegister(){
+  const payload={
+    username:document.getElementById('regUser').value.trim(),
+    password:document.getElementById('regPass').value,
+    age:document.getElementById('regAge').value,
+    weight:document.getElementById('regWeight').value,
+    height:document.getElementById('regHeight').value,
+    level:document.getElementById('regLevel').value,
+    goal:document.getElementById('regGoal').value,
+  };
+  if(!payload.username||!payload.password||!payload.age||!payload.weight||!payload.height){toast('Fill in all fields',true);return;}
+  const data=await api('POST','/api/register',payload);
+  if(!data.success){toast(data.message,true);return;}
+  toast('Account created! Sign in now.');
+  showLogin();
+}
+
+async function doLogout(){
+  await api('POST','/api/logout');
+  currentUser=null;
+  document.getElementById('authScreen').style.display='flex';
+  loadOccupancy();
+}
+
+/* NAV */
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  const renders={dashboard:renderDashboard,exercises:renderExercises,history:renderHistory,leaderboard:renderLeaderboard,profile:renderProfile};
+  if(renders[page]) renders[page]();
+}
+
+/* PLAN HTML */
+function renderPlanHTML(data,showSave){
+  const rows=data.exercises.map((e,i)=>`
+    <div class="plan-exercise-row">
+      <div class="row-num">${String(i+1).padStart(2,'0')}</div>
+      <div><div class="row-name">${e.name}</div>
+        <div class="ex-tags" style="margin-top:6px"><span class="tag ${e.level}">${e.level}</span><span class="tag">${e.category}</span></div>
+      </div>
+      <div class="row-val"><div class="v">${e.sets}</div><div class="l">sets</div></div>
+      <div class="row-val"><div class="v">${e.reps}</div><div class="l">reps</div></div>
+      <div class="row-val"><div class="v">${e.calories}</div><div class="l">kcal</div></div>
+    </div>`).join('');
+  const saveBtn=showSave?`<button class="btn btn-primary" style="margin-top:12px" onclick="saveWorkout()">✓ SAVE TO HISTORY</button>`:'';
+  return `
+    <div class="plan-header">
+      <div><div class="plan-title">${data.goal.replace(/_/g,' ').toUpperCase()}</div>
+        <div style="font-size:11px;letter-spacing:2px;opacity:0.7;text-transform:uppercase">${data.level} · ${data.exercises.length} exercises</div>
+      </div>
+      <div style="text-align:right"><div class="plan-calories">${data.total_calories}</div><div class="plan-calories-label">kcal est.</div></div>
+    </div>
+    <div class="plan-exercises">${rows}</div>${saveBtn}`;
+}
+
+/* DASHBOARD */
+async function renderDashboard(){
+  loadOccupancy();
+  const u=currentUser;
+  document.getElementById('dashStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Workouts</div><div class="stat-value">${u.workout_count}</div><div class="stat-unit">sessions</div></div>
+    <div class="stat-card"><div class="stat-label">Calories Burned</div><div class="stat-value">${u.total_calories.toLocaleString()}</div><div class="stat-unit">kcal total</div></div>
+    <div class="stat-card"><div class="stat-label">BMI</div><div class="stat-value">${u.bmi}</div><div class="stat-unit">${u.bmi_category}</div></div>
+    <div class="stat-card"><div class="stat-label">Level</div><div class="stat-value">${u.level.slice(0,3).toUpperCase()}</div><div class="stat-unit">${u.level}</div></div>`;
+  const rec=await api('GET','/api/recommend');
+  if(rec.success) document.getElementById('dashRecommend').innerHTML=renderPlanHTML(rec,false);
+}
+
+/* WORKOUT */
+async function generateWorkout(){
+  const goal=document.getElementById('workoutGoal').value;
+  const level=document.getElementById('workoutLevel').value;
+  let url='/api/recommend';
+  const p=[];
+  if(goal) p.push(`goal=${goal}`);
+  if(level) p.push(`level=${level}`);
+  if(p.length) url+='?'+p.join('&');
+  document.getElementById('workoutResult').innerHTML='<div class="loading">Python is generating your plan...</div>';
+  const data=await api('GET',url);
+  if(data.success){lastPlan=data;document.getElementById('workoutResult').innerHTML=renderPlanHTML(data,true);}
+  else toast(data.message,true);
+}
+
+async function saveWorkout(){
+  if(!lastPlan) return;
+  const data=await api('POST','/api/save_workout',lastPlan);
+  if(data.success){toast('Workout saved!');currentUser.workout_count++;currentUser.total_calories+=lastPlan.total_calories;}
+  else toast(data.message,true);
+}
+
+/* EXERCISES */
+async function renderExercises(){
+  const data=await api('GET','/api/exercises?category=all');
+  if(!data.success) return;
+  const cats=['all',...(data.categories||[])];
+  document.getElementById('catPills').innerHTML=cats.map(c=>
+    `<button class="pill ${c===activeCategory?'active':''}" onclick="filterCategory('${c}',this)">${c.replace('_',' ').toUpperCase()}</button>`
+  ).join('');
+  renderGrid(data.exercises);
+}
+
+async function filterCategory(cat,el){
+  activeCategory=cat;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('exSearch').value='';
+  document.getElementById('exSectionLabel').textContent=cat==='all'?'ALL EXERCISES':cat.replace('_',' ').toUpperCase();
+  const data=await api('GET',`/api/exercises?category=${cat}`);
+  if(data.success) renderGrid(data.exercises);
+}
+
+async function searchExercises(){
+  const kw=document.getElementById('exSearch').value.trim();
+  document.getElementById('exSectionLabel').textContent=kw?`RESULTS FOR "${kw.toUpperCase()}"` :'ALL EXERCISES';
+  const data=await api('GET',`/api/exercises?category=${activeCategory}&search=${encodeURIComponent(kw)}`);
+  if(data.success) renderGrid(data.exercises);
+}
+
+function renderGrid(exercises){
+  document.getElementById('exerciseGrid').innerHTML=exercises.length
+    ? exercises.map(e=>`
+        <div class="exercise-card">
+          <div class="ex-name">${e.name}</div>
+          <div class="ex-tags"><span class="tag ${e.level}">${e.level}</span><span class="tag">${e.category.replace('_',' ')}</span></div>
+          <div class="ex-meta">
+            <span><strong>${e.sets}</strong>sets</span>
+            <span><strong>${e.reps}</strong>reps</span>
+            <span><strong>${e.calories}</strong>kcal</span>
+          </div>
+        </div>`).join('')
+    : '<div class="empty-state">No exercises found</div>';
+}
+
+/* HISTORY */
+async function renderHistory(){
+  const data=await api('GET','/api/history');
+  if(!data.success) return;
+  document.getElementById('historyList').innerHTML=data.history.length
+    ? data.history.map(h=>`
+        <div class="history-item">
+          <div class="history-date">${h.date}</div>
+          <div class="history-goal">${h.goal.replace(/_/g,' ')} <span style="color:var(--muted);font-size:13px">· ${h.level}</span></div>
+          <div style="text-align:right"><div class="history-cal">${h.total_calories}</div><div style="font-size:10px;color:var(--muted);letter-spacing:1px">KCAL</div></div>
+        </div>`).join('')
+    : '<div class="empty-state">No workouts yet</div>';
+}
+
+/* LEADERBOARD */
+async function renderLeaderboard(){
+  const data=await api('GET','/api/leaderboard');
+  const rankClass=['gold','silver','bronze'];
+  document.getElementById('leaderboardList').innerHTML=data.leaderboard.length
+    ? data.leaderboard.map((u,i)=>`
+        <div class="leaderboard-row">
+          <div class="lb-rank ${rankClass[i]||''}">${String(i+1).padStart(2,'0')}</div>
+          <div><div class="lb-name">${u.username}</div><div style="font-size:10px;color:var(--muted);letter-spacing:1px">ATHLETE</div></div>
+          <div style="text-align:right"><div class="lb-count">${u.count}</div><div style="font-size:10px;color:var(--muted);letter-spacing:1px">WORKOUTS</div></div>
+        </div>`).join('')
+    : '<div class="empty-state">No athletes yet</div>';
+}
+
+/* PROFILE */
+function renderProfile(){
+  const u=currentUser;
+  const bmiPct=Math.min(100,Math.max(0,((u.bmi-15)/25)*100));
+  document.getElementById('profileContent').innerHTML=`
+    <div class="stats-grid" style="max-width:640px;margin-bottom:32px">
+      <div class="stat-card"><div class="stat-label">Age</div><div class="stat-value">${u.age}</div></div>
+      <div class="stat-card"><div class="stat-label">Weight</div><div class="stat-value">${u.weight}<span style="font-size:16px;color:var(--muted)">kg</span></div></div>
+      <div class="stat-card"><div class="stat-label">Height</div><div class="stat-value">${u.height}<span style="font-size:16px;color:var(--muted)">cm</span></div></div>
+      <div class="stat-card"><div class="stat-label">BMI — ${u.bmi_category}</div><div class="stat-value">${u.bmi}</div>
+        <div class="bmi-bar"><div class="bmi-fill" style="width:${bmiPct}%"></div></div>
+      </div>
+    </div>
+    <div class="section-label">UPDATE PROFILE</div>
+    <div class="form-grid" style="max-width:640px">
+      <div class="field"><label>Weight (kg)</label><input type="number" id="pWeight" value="${u.weight}" step="0.1"/></div>
+      <div class="field"><label>Height (cm)</label><input type="number" id="pHeight" value="${u.height}"/></div>
+      <div class="field"><label>Goal</label>
+        <select id="pGoal">
+          ${['muscle_gain','weight_loss','endurance','general_fitness','flexibility','strength','athletic'].map(g=>
+            `<option value="${g}" ${g===u.goal?'selected':''}>${g.replace(/_/g,' ')}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Level</label>
+        <select id="pLevel">
+          ${['beginner','intermediate','advanced'].map(l=>
+            `<option value="${l}" ${l===u.level?'selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-full flex gap-12 mt-8">
+        <button class="btn btn-primary" onclick="updateProfile()">SAVE CHANGES</button>
+        <button class="btn btn-ghost" onclick="clearHistory()">CLEAR HISTORY</button>
+      </div>
+    </div>`;
+}
+
+async function updateProfile(){
+  const payload={weight:parseFloat(document.getElementById('pWeight').value),height:parseFloat(document.getElementById('pHeight').value),goal:document.getElementById('pGoal').value,level:document.getElementById('pLevel').value};
+  const data=await api('PUT','/api/profile',payload);
+  if(data.success){currentUser={...currentUser,...payload,bmi:data.bmi,bmi_category:data.bmi_category};toast('Profile saved!');renderProfile();}
+  else toast(data.message,true);
+}
+
+async function clearHistory(){
+  if(!confirm('Clear all workout history?')) return;
+  const data=await api('DELETE','/api/history');
+  if(data.success){currentUser.workout_count=0;currentUser.total_calories=0;toast('History cleared!');renderProfile();}
+}
+
+/* TOAST */
+function toast(msg,error=false){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(error?' error':'');
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
